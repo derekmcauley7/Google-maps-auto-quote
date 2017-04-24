@@ -1,0 +1,206 @@
+<html>
+  <head>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <meta charset="utf-8">
+    <title>Total - Trip Quote calculator</title>
+   <link href="style42.css" type="text/css" rel="stylesheet">
+    <link rel="stylesheet" href="bootstrap/css/bootstrap.css">
+      
+<style>      
+    
+    #right-panel {
+        font-family: 'Roboto','sans-serif';
+        line-height: 30px;
+        padding-left: 10px;
+      }
+
+      #right-panel select, #right-panel input {
+        font-size: 15px;
+      }
+
+      #right-panel select {
+        width: 100%;
+      }
+
+      #right-panel i {
+        font-size: 12px;
+      }
+      html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+      #map {
+        height: 100%;
+        width: 50%;
+      }
+      #right-panel {
+        float: right;
+        width: 48%;
+        padding-left: 2%;
+      }
+      #output {
+        font-size: 11px;
+      }
+    </style>
+  </head>
+  <body>
+      		<!-- Top menu -->
+		<nav class="navbar navbar-inverse navbar-fixed-top navbar-no-bg" role="navigation">
+			<div class="container">
+				<div class="navbar-header">
+					<button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#top-navbar-1">
+						<span class="sr-only">Toggle navigation</span>
+						<span class="icon-bar"></span>
+						<span class="icon-bar"></span>
+						<span class="icon-bar"></span>
+					</button>
+					<a class="navbar-brand" href="google-maps.html">Trip Quote calculator</a>
+				</div>
+				<!-- Collect the nav links, forms, and other content for toggling -->
+				<div class="collapse navbar-collapse" id="top-navbar-1">
+					<ul class="nav navbar-nav navbar-right">
+						<li><a  href="google-maps.html">Home</a></li>
+					
+					</ul>
+				</div>
+			</div>
+		</nav>
+      <br/>
+        <div class="container">
+<div class="col-md-12">
+    <br/>  <br/>  
+ 
+    <div id="right-panel">
+      <div id="inputs">
+          
+                  <script>
+    document.write("Pick up point: " + localStorage.getItem("storageName") + "<br/>");
+    var startAddresss = localStorage.getItem("storageName");
+    document.write("Drop off point: " + localStorage.getItem("storageName4") + "<br/>");
+    var finishAddresss = localStorage.getItem("storageName4");                 
+                      
+                      
+    var startLocation = localStorage.getItem("storageName2"); 
+    var startLocation = startLocation.replace("(", "");
+    var startLocation = startLocation.replace(")", "");
+                      
+    var starta = startLocation.substring(0, startLocation.indexOf(','));  
+
+    var startb = startLocation.substring(startLocation.indexOf(",") + 1);
+ 
+                      
+    var finishLocation = localStorage.getItem("storageName3"); 
+    var finishLocation = finishLocation.replace("(", "");
+    var finishLocation = finishLocation.replace(")", "");
+                                   
+    var finisha = finishLocation.substring(0, finishLocation.indexOf(','));  
+                      
+    var finishb = finishLocation.substring(finishLocation.indexOf(",") + 1);
+               
+        
+        </script>
+
+      </div>
+      <div>
+        <strong>Results</strong>
+      </div>
+      <div id="output"></div>
+    </div>
+    <div id="map"></div>
+    <script>
+      function initMap() {
+        var bounds = new google.maps.LatLngBounds;
+        var markersArray = [];
+
+    
+        var a = parseFloat(starta);
+        var b = parseFloat(startb);
+        var c = parseFloat(finisha);
+        var d = parseFloat(finishb);
+        var origin1 = {lat: a, lng: b};
+        var origin2 = startAddresss;
+        var destinationA = finishAddresss;
+        var destinationB = {lat: c, lng: d};
+
+        var destinationIcon = 'https://chart.googleapis.com/chart?' +
+            'chst=d_map_pin_letter&chld=D|FF0000|000000';
+        var originIcon = 'https://chart.googleapis.com/chart?' +
+            'chst=d_map_pin_letter&chld=O|FFFF00|000000';
+        var map = new google.maps.Map(document.getElementById('map'), {
+          center: {lat: 55.53, lng: 9.4},
+          zoom: 10
+        });
+        var geocoder = new google.maps.Geocoder;
+
+        var service = new google.maps.DistanceMatrixService;
+        service.getDistanceMatrix({
+          origins: [origin1, origin2],
+          destinations: [destinationA, destinationB],
+          travelMode: 'DRIVING',
+          unitSystem: google.maps.UnitSystem.METRIC,
+          avoidHighways: false,
+          avoidTolls: false
+        }, function(response, status) {
+          if (status !== 'OK') {
+            alert('Error was: ' + status);
+          } else {
+            var originList = response.originAddresses;
+            var destinationList = response.destinationAddresses;
+            var outputDiv = document.getElementById('output');
+            outputDiv.innerHTML = '';
+            deleteMarkers(markersArray);
+
+            var showGeocodedAddressOnMap = function(asDestination) {
+              var icon = asDestination ? destinationIcon : originIcon;
+              return function(results, status) {
+                if (status === 'OK') {
+                  map.fitBounds(bounds.extend(results[0].geometry.location));
+                  markersArray.push(new google.maps.Marker({
+                    map: map,
+                    position: results[0].geometry.location,
+                    icon: icon
+                  }));
+                } else {
+                  alert('Geocode was not successful due to: ' + status);
+                }
+              };
+            };
+
+            for (var i = 0; i < originList.length; i++) {
+              var results = response.rows[i].elements;
+              geocoder.geocode({'address': originList[i]},
+                  showGeocodedAddressOnMap(false));
+              for (var j = 0; j < results.length; j++) {
+                geocoder.geocode({'address': destinationList[j]},
+                    showGeocodedAddressOnMap(true)); 
+                  
+                var distance = results[j].distance.text;
+                var distance = distance.replace("km", "");
+                var disnum = parseFloat(distance) * 1.1;
+                
+                outputDiv.innerHTML += 
+                  
+                    'Distance: ' + results[j].distance.text  +
+                     '<br>' +
+                      'Price: &#8364;' + disnum + '<br> ' +
+                    'Time: ' + results[j].duration.text + '<br> ';
+                  var time = duration.text; 
+              }
+            }
+          }
+        });
+      }
+
+      function deleteMarkers(markersArray) {
+        for (var i = 0; i < markersArray.length; i++) {
+          markersArray[i].setMap(null);
+        }
+        markersArray = [];
+      }
+    </script>
+    <script async defer
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDS-ue65Jx_HySaXRqnMehRbg67cMCL_xM&libraries=places&callback=initMap">
+    </script>
+  </body>
+</html>
